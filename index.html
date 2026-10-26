@@ -1103,6 +1103,11 @@ a { color: inherit; text-decoration: none; }
     ], parked: [{plate:'DEMO102',category:'Students'}, {plate:'DEMO201',category:'Visitors'}, {plate:'DEMO202',category:'Visitors'}], logs: []};
   }
   function available(state, category) { return state.capacity[category] - state.parked.filter(v => v.category === category).length; }
+  function unregisteredPlate(state) {
+    let number = 999;
+    while (state.vehicles.some(v => v.plate === 'DEMO' + number)) number++;
+    return 'DEMO' + number;
+  }
   function scan(state, plate, readable = true) {
     let status = 'DENIED', details = 'Vehicle is not registered.';
     const vehicle = state.vehicles.find(v => v.plate === plate);
@@ -1120,7 +1125,7 @@ a { color: inherit; text-decoration: none; }
     const row = {plate,status,details,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})};
     state.logs.unshift(row); return row;
   }
-  if (typeof module !== 'undefined' && module.exports) module.exports = {createState,available,scan};
+  if (typeof module !== 'undefined' && module.exports) module.exports = {createState,available,scan,unregisteredPlate};
   if (typeof document === 'undefined') return;
   let state = createState();
   const $ = s => document.querySelector(s);
@@ -1168,13 +1173,13 @@ a { color: inherit; text-decoration: none; }
     if (scenario==='entry') plate=state.vehicles.find(v=>v.active&&!state.parked.some(p=>p.plate===v.plate)&&available(state,v.category)>0)?.plate;
     if (scenario==='exit') plate=state.parked.find(p=>state.vehicles.some(v=>v.plate===p.plate&&v.active))?.plate;
     if (scenario==='full') plate='DEMO203';
-    if (scenario==='denied') plate='DEMO999';
+    if (scenario==='denied') plate=unregisteredPlate(state);
     if (scenario==='low') plate='UNREADABLE';
     if (!plate) {$('#decision-result').textContent=scenario==='exit'?'No active parked vehicle to exit. Try an entry or reset the demo.':'No active vehicle with an available slot. Add a vehicle, simulate an exit, or reset.';return;}
     const row=scan(state,plate,scenario!=='low');render();
     $('#decision-result').textContent=row.status.replace('_',' ')+': '+row.plate+' — '+row.details;
   });
-  $('#reset-demo').addEventListener('click',()=>{state=createState();render();$('#decision-result').textContent='Demo reset. Select a scenario to begin.';$('#registry-message').textContent='';});
+  $('#reset-demo').addEventListener('click',()=>{state=createState();$('#demo-vehicle-form').reset();$('#scenario').value='entry';$('#log-filter').value='ALL';if(location.hash.startsWith('#logs?'))history.replaceState(null,'','#logs');render();$('#decision-result').textContent='Demo reset. Select a scenario to begin.';$('#registry-message').textContent='';});
   $('#log-filter').addEventListener('change',render);
   $('#demo-vehicle-form').addEventListener('submit',event=>{
     event.preventDefault();const plate=$('#plate').value.trim().toUpperCase(),owner=$('#owner').value.trim(),category=$('#category').value;
