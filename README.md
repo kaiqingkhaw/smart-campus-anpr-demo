@@ -25,3 +25,7 @@ Download `index.html` and open it in a browser. The page contains the demo logic
 ## Deployment
 
 GitHub Pages serves `index.html` from the root of the `main` branch. No build step or backend is required.
+
+## Checks
+
+With Node.js installed, run `node --test test-demo.cjs` from this repository. The seven tests cover entry and exit capacity, denied and unreadable plates, full parking, inactive records, category changes, sample-plate collisions and fresh session state. They test the simulation logic embedded in the published page; they do not validate OCR accuracy or physical hardware.
